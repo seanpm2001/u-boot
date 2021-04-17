@@ -1143,6 +1143,29 @@ config ARCH_SUNXI
 	select SPL_SYS_THUMB_BUILD if !ARM64
 	select SYS_THUMB_BUILD if !ARM64
 	select SPL_USE_TINY_PRINTF
+	select USE_PREBOOT
+	select SYS_RELOC_GD_ENV_ADDR
+	imply BOARD_LATE_INIT
+	imply CMD_DM
+	imply CMD_GPT
+	imply CMD_UBI if MTD_RAW_NAND
+	imply DISTRO_DEFAULTS
+	imply FAT_WRITE
+	imply FIT
+	imply OF_LIBFDT_OVERLAY
+	imply PRE_CONSOLE_BUFFER
+	imply SPL_GPIO
+	imply SPL_LIBCOMMON_SUPPORT
+	imply SPL_LIBGENERIC_SUPPORT
+	imply SPL_LOAD_FIT
+	imply SPL_MMC if MMC
+	imply SPL_POWER
+	imply SPL_SERIAL
+	imply SYSRESET
+	imply SYSRESET_WATCHDOG
+	imply SYSRESET_WATCHDOG_AUTO
+	imply USB_GADGET
+	imply WDT
 
 config ARCH_U8500
 	bool "ST-Ericsson U8500 Series"
