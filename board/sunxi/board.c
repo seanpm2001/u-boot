@@ -863,7 +863,7 @@ int board_late_init(void)
 	usb_ether_init();
 #endif
 
-#ifdef CONFIG_REMOTEPROC_SUN6I_AR100
+#ifdef SUNXI_SCP_BASE
 	if (!rproc_load(0, SUNXI_SCP_BASE, SUNXI_SCP_MAX_SIZE)) {
 		puts("Starting SCP...\n");
 		rproc_start(0);
