@@ -31,9 +31,8 @@ config TARGET_SIPEED_MAIX
 	bool "Support Sipeed Maix Board"
 	select SYS_CACHE_SHIFT_6
 
-config TARGET_SUN20I_D1
-	bool "Support Allwinner D1 Boards"
-	select BOARD_SUNXI
+config TARGET_SUNXI
+	bool "Support Allwinner sunxi SoCs with RISC-V cores"
 	select SYS_CACHE_SHIFT_6
 
 endchoice

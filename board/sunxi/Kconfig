@@ -1,173 +1,20 @@
-config BOARD_SUNXI
-	bool
-	select BINMAN
-	select CLK
-	select CMD_GPIO if GPIO
-	select CMD_MMC if MMC
-	select CMD_USB if DISTRO_DEFAULTS && USB_HOST
-	select DM
-	select DM_ETH if NET
-	select DM_GPIO if GPIO
-	select DM_I2C if I2C
-	select DM_SCSI if BLK && SCSI
-	select DM_SERIAL if SERIAL
-	select DM_SPI if SPI
-	select DM_SPI_FLASH if SPI
-	select GENERIC_RISCV if RISCV
-	select OF_BOARD_SETUP
-	select PINCTRL
-	select RAM if SPL_DM
-	select SPL_CLK if SPL_DM
-	select SPL_DM if RISCV && SPL
-	select SPL_DM_SPI if SPL_DM && SPL_SPI
-	select SPL_DM_SPI_FLASH if SPL_DM && SPL_SPI
-	select SPL_OF_CONTROL if SPL_DM
-	select SPL_PINCTRL if SPL_DM
-	select SPL_PINCONF if SPL_DM
-	select SPL_RAM if SPL_DM
-	select SPL_SEPARATE_BSS if SPL
-	select SUPPORT_SPL
-	select SYS_RELOC_GD_ENV_ADDR
-	select USB if DISTRO_DEFAULTS
-	select USB_KEYBOARD if DISTRO_DEFAULTS && USB_HOST
-	select USE_PREBOOT
-	imply BOARD_LATE_INIT
-	imply CMD_DM
-	imply CMD_GPT
-	imply CMD_UBI if MTD_RAW_NAND
-	imply DISTRO_DEFAULTS
-	imply FAT_WRITE
-	imply FIT
-	imply MMC
-	imply OF_LIBFDT_OVERLAY
-	imply PRE_CONSOLE_BUFFER
-	imply SPL
-	imply SPL_GPIO
-	imply SPL_LIBCOMMON_SUPPORT
-	imply SPL_LIBGENERIC_SUPPORT
-	imply SPL_LOAD_FIT
-	imply SPL_MMC if MMC
-	imply SPL_POWER
-	imply SPL_SERIAL
-	imply SUNXI_GPIO
-	imply SYS_I2C_MVTWSI
-	imply SYS_NS16550
-	imply SYSRESET
+menu "Board-specific options"
+	depends on ARCH_SUNXI || TARGET_SUNXI
+
+choice
+	prompt "sunxi SoC Variant"
+
+config MACH_SUN20I
+	bool "sun20i (Allwinner D1)"
+	depends on RISCV
+	select GENERIC_RISCV
+	select SPL_DM if SPL
 	imply SYSRESET_SBI
-	imply SYSRESET_WATCHDOG
-	imply SYSRESET_WATCHDOG_AUTO
-	imply USB_EHCI_GENERIC
-	imply USB_EHCI_HCD
-	imply USB_GADGET
-	imply USB_OHCI_GENERIC
-	imply USB_OHCI_HCD
-	imply WDT
 
-if BOARD_SUNXI
+endchoice
 
-config IDENT_STRING
-	default " Allwinner Technology"
-
-config PRE_CON_BUF_ADDR
-	default 0x81000000 if MACH_SUNIV
-	default 0x2f000000 if MACH_SUN9I
-	default 0x4f000000 if SUNXI_MINIMUM_DRAM_MB >= 256
-	default 0x43000000 if SUNXI_MINIMUM_DRAM_MB >= 64
-
-config SPL_BSS_START_ADDR
-	default 0x81f80000 if MACH_SUNIV
-	default 0x2ff80000 if MACH_SUN9I
-	default 0x4ff80000 if SUNXI_MINIMUM_DRAM_MB >= 256
-	default 0x43f80000 if SUNXI_MINIMUM_DRAM_MB >= 64
-
-config SPL_OPENSBI_LOAD_ADDR
-	default 0x40000000 if RISCV
-
-config SPL_STACK
-	default 0x48000 if TARGET_SUN20I_D1
-
-config SPL_STACK_R_ADDR
-	default 0x81e00000 if MACH_SUNIV
-	default 0x2fe00000 if MACH_SUN9I
-	default 0x4fe00000 if SUNXI_MINIMUM_DRAM_MB >= 256
-	default 0x43e00000 if SUNXI_MINIMUM_DRAM_MB >= 64
-
-config SPL_TEXT_BASE
-	default 0x10060 if MACH_SUN9I || MACH_SUN50I || MACH_SUN50I_H5
-	default 0x20060 if SUN50I_GEN_H6 || TARGET_SUN20I_D1
-	default 0x00060
-
-config SUNXI_MINIMUM_DRAM_MB
-	int
-	default 32 if MACH_SUNIV
-	default 64 if MACH_SUN8I_V3S || TARGET_SUN20I_D1
-	default 256
-	help
-	  Minimum DRAM size expected on the board. Traditionally we
-	  assumed 256 MB, so that U-Boot would load at 160MB. With
-	  co-packaged DRAM we have smaller sizes, though, so U-Boot's
-	  own load address and the default payload addresses must be
-	  shifted down. This is expected to be fixed by the SoC
-	  selection.
-
-config SUNXI_SRAM_ADDRESS
-	hex
-	default 0x10000 if MACH_SUN9I || MACH_SUN50I || MACH_SUN50I_H5
-	default 0x20000 if SUN50I_GEN_H6 || TARGET_SUN20I_D1
-	default 0x0
-	help
-	  Older Allwinner SoCs have their boot mask ROM mapped just
-	  below 4GB, with the first SRAM region located at address 0.
-	  Newer SoCs map the boot ROM at address 0 instead and move the
-	  SRAM to a different address.
-
-config SYS_BOARD
-	default "sunxi"
-
-config SYS_CLK_FREQ
-	default  408000000 if MACH_SUNIV
-	default 1008000000 if MACH_SUN4I
-	default 1008000000 if MACH_SUN5I
-	default 1008000000 if MACH_SUN6I
-	default  912000000 if MACH_SUN7I
-	default 1008000000 if MACH_SUN8I
-	default 1008000000 if MACH_SUN9I
-	default 1008000000 if TARGET_SUN20I_D1
-	default  816000000 if MACH_SUN50I || MACH_SUN50I_H5
-	default  888000000 if MACH_SUN50I_H6
-	default 1008000000 if MACH_SUN50I_H616
-
-config SYS_CONFIG_NAME
-	default "suniv"  if MACH_SUNIV
-	default "sun4i"  if MACH_SUN4I
-	default "sun5i"  if MACH_SUN5I
-	default "sun6i"  if MACH_SUN6I
-	default "sun7i"  if MACH_SUN7I
-	default "sun8i"  if MACH_SUN8I
-	default "sun9i"  if MACH_SUN9I
-	default "sun20i" if TARGET_SUN20I_D1
-	default "sun50i" if MACH_SUN50I
-	default "sun50i" if MACH_SUN50I_H6
-	default "sun50i" if MACH_SUN50I_H616
-
-config SYS_CPU
-	default "generic" if TARGET_SUN20I_D1
-
-config SYS_LOAD_ADDR
-	default 0x81000000 if MACH_SUNIV
-	default 0x22000000 if MACH_SUN9I
-	default 0x42000000
-
-config SYS_SOC
-	default "sunxi"
-
-config TEXT_BASE
-	default 0x81700000 if MACH_SUNIV
-	default 0x2a000000 if MACH_SUN9I
-	default 0x4a000000 if SUNXI_MINIMUM_DRAM_MB >= 256
-	default 0x42e00000 if SUNXI_MINIMUM_DRAM_MB >= 64
-
-menu "sunxi board options"
+config NR_DRAM_BANKS
+	default 1
 
 choice
 	prompt "SPL Image Type"
@@ -195,78 +42,71 @@ config SPL_IMAGE_TYPE
 	default "sunxi_egon" if SPL_IMAGE_TYPE_SUNXI_EGON
 	default "sunxi_toc0" if SPL_IMAGE_TYPE_SUNXI_TOC0
 
-config MMC_SUNXI_SLOT_EXTRA
-	int "MMC extra slot number"
-	default -1
-	help
-	  sunxi builds always enable mmc0. Some boards also have a
-	  second SD card slot or eMMC on mmc1 - mmc3. Setting this to 1,
-	  2 or 3 will enable support for this.
+config SPL_MAX_SIZE
+	hex
+	default SUNXI_SRAM_SIZE
 
-config MMC1_PINS_PH
-	bool "MMC1 pins are on Port H"
-	depends on MACH_SUN4I || MACH_SUN7I || MACH_SUN8I_R40
-	help
-	  Select this option on boards where mmc1 uses the Port H pinmux.
+config SPL_OPENSBI_LOAD_ADDR
+	default 0x40000000
 
-config UART0_PORT_F
-	bool "UART0 pins are on Port F (MicroSD breakout board)"
-	help
-	  Repurpose the SD card slot for getting access to the UART0
-	  serial console. Primarily useful only for low level u-boot
-	  debugging on tablets, where normal UART0 is difficult to
-	  access and requires device disassembly and/or soldering. As
-	  the SD card can't be used at the same time, the system can be
-	  only booted in FEL mode. Only enable this if you really know
-	  what you are doing.
+config SUNXI_SRAM_ADDRESS
+	hex
+	default 0x20000 if MACH_SUN20I
 
-config AXP_DISABLE_BOOT_ON_POWERON
-	bool "Disable device boot on power plug-in"
-	depends on AXP209_POWER || AXP221_POWER || AXP809_POWER || AXP818_POWER
-	help
-	  Say Y here to prevent the device from booting up because of a
-	  plug-in event. When set, the device will boot into the SPL
-	  briefly to determine why it was powered on, and if the board
-	  was powered on because of a plug-in event instead of a button
-	  press event, it will shut back off.
+config SUNXI_SRAM_SIZE
+	hex
+	default 0x28000 if MACH_SUN20I
 
-config CHIP_DIP_SCAN
-	bool "Enable DIPs detection for CHIP board"
-	select SUPPORT_EXTENSION_SCAN
-	select W1
-	select W1_GPIO
-	select W1_EEPROM
-	select W1_EEPROM_DS24XXX
-	select CMD_EXTENSION
+config SYS_BOARD
+	default "sunxi"
 
-config PINE64_DT_SELECTION
-	bool "Enable Pine64 device tree selection code"
-	depends on MACH_SUN50I
-	help
-	  The original Pine A64 and Pine A64+ are similar but different
-	  boards and can be differed by the DRAM size. Pine A64 has
-	  512MiB DRAM, and Pine A64+ has 1GiB or 2GiB. By selecting this
-	  option, the device tree selection code specific to Pine64 which
-	  utilizes the DRAM size will be enabled.
+config SYS_CONFIG_NAME
+	default "sun20i" if MACH_SUN20I
 
-config PINEPHONE_DT_SELECTION
-	bool "Enable PinePhone device tree selection code"
-	depends on MACH_SUN50I
-	help
-	  Enable this option to automatically select the device tree for the
-	  correct PinePhone hardware revision during boot.
+config SYS_CPU
+	default "generic" if MACH_SUN20I
 
-config BLUETOOTH_DT_DEVICE_FIXUP
-	string "Fixup the Bluetooth controller address"
-	default ""
-	help
-	  This option specifies the DT compatible name of the Bluetooth
-	  controller for which to set the "local-bd-address" property.
-	  Set this option if your device ships with the Bluetooth controller
-	  default address.
-	  The used address is "bdaddr" if set, and "ethaddr" with the LSB
-	  flipped elsewise.
+config SYS_SOC
+	default "sunxi"
+
+config SYS_TEXT_BASE
+	default 0x4a000000 if MACH_SUN20I
+
+config BOARD_SPECIFIC_OPTIONS
+	def_bool y
+	select CLK
+	select DM_ETH if NET
+	select DM_GPIO
+	select DM_I2C if I2C
+	select DM_SERIAL
+	select DM_SPI if SPI
+	select GPIO
+	select MMC_SUNXI_HAS_NEW_MODE if MMC_SUNXI
+	select OF_HAS_PRIOR_STAGE
+	select PHY_SUN4I_USB if USB
+	select PINCTRL
+	select SPL_CLK if SPL_DM
+	select SPL_GPIO if SPL_DM
+	select SPL_OF_CONTROL if SPL_DM
+	select SPL_PINCTRL if SPL_DM
+	select SPL_SEPARATE_BSS if SPL
+	select SUPPORT_SPL
+	imply CMD_MMC
+	imply CMD_USB
+	imply DISTRO_DEFAULTS
+	imply FIT
+	imply MMC
+	imply SPL
+	imply SPL_SPI if SPI
+	imply SPL_MMC if MMC
+	imply SUNXI_GPIO
+	imply SYS_I2C_MVTWSI
+	imply SYS_NS16550
+	imply SYSRESET
+	imply USB_EHCI_GENERIC
+	imply USB_EHCI_HCD
+	imply USB_OHCI_GENERIC
+	imply USB_OHCI_HCD
+	imply WDT
 
 endmenu
-
-endif
