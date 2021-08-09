@@ -40,17 +40,15 @@
 
 unsigned int clock_get_pll6(void)
 {
-	uint32_t rval = readl((void *)0x2001020);
+	struct sunxi_ccm_reg *const ccm =
+		(struct sunxi_ccm_reg *)0x2001000UL;
 
+	uint32_t rval = readl(&ccm->pll6_cfg);
 	int n = ((rval & CCM_PLL6_CTRL_N_MASK) >> CCM_PLL6_CTRL_N_SHIFT) + 1;
 	int m = ((rval >> 1) & 0x1) + 1;
 	int p0 = ((rval >> 16) & 0x7) + 1;
 	/* The register defines PLL6-2X, not plain PLL6 */
-	uint32_t freq = 24000000UL * n / m / p0;
-
-	printf("PLL reg = 0x%08x, freq = %d\n", rval, freq);
-
-	return freq;
+	return 24000000 / n / m / p0;
 }
 
 struct sunxi_mmc_plat {
@@ -78,7 +76,7 @@ static bool sunxi_mmc_can_calibrate(void)
 	       IS_ENABLED(CONFIG_MACH_SUN50I_H5) ||
 	       IS_ENABLED(CONFIG_SUN50I_GEN_H6) ||
 	       IS_ENABLED(CONFIG_MACH_SUN8I_R40) ||
-	       IS_ENABLED(CONFIG_TARGET_SUN20I_D1);
+	       IS_ENABLED(CONFIG_MACH_SUN20I);
 }
 
 static int mmc_set_mod_clk(struct sunxi_mmc_priv *priv, unsigned int hz)
@@ -212,7 +210,7 @@ static int mmc_config_clock(struct sunxi_mmc_priv *priv, struct mmc *mmc)
 	rval &= ~SUNXI_MMC_CLK_DIVIDER_MASK;
 	writel(rval, &priv->reg->clkcr);
 
-#if defined(CONFIG_SUNXI_GEN_SUN6I) || defined(CONFIG_SUN50I_GEN_H6) || defined(CONFIG_TARGET_SUN20I_D1)
+#if defined(CONFIG_SUNXI_GEN_SUN6I) || defined(CONFIG_SUN50I_GEN_H6) || defined(CONFIG_MACH_SUN20I)
 	/* A64 supports calibration of delays on MMC controller and we
 	 * have to set delay of zero before starting calibration.
 	 * Allwinner BSP driver sets a delay only in the case of
