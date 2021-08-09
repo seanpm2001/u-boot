@@ -16,6 +16,9 @@
 #include <asm/global_data.h>
 #include <asm/gpio.h>
 #include <asm/io.h>
+#if 0
+#include <asm/arch/clock.h>
+#endif
 #include <common.h>
 #include <clk.h>
 #include <dm.h>
@@ -317,7 +320,19 @@ static int sun8i_emac_set_syscon(struct sun8i_eth_pdata *pdata,
 {
 	u32 reg;
 
-	reg = readl(priv->sysctl_reg);
+	if (priv->variant == R40_GMAC) {
+#define CONFIG_GMAC_TX_DELAY 0
+		/* Select RGMII for R40 */
+		reg = readl(priv->sysctl_reg + 0x164);
+		reg |= SC_ETCS_INT_GMII |
+		       SC_EPIT |
+		       (CONFIG_GMAC_TX_DELAY << SC_ETXDC_OFFSET);
+
+		writel(reg, priv->sysctl_reg + 0x164);
+		return 0;
+	}
+
+	reg = readl(priv->sysctl_reg + 0x30);
 
 	reg = sun8i_emac_set_syscon_ephy(priv, reg);
 
@@ -827,9 +842,9 @@ static int sun8i_emac_eth_of_to_plat(struct udevice *dev)
 		      __func__);
 		return -EINVAL;
 	}
-
-	syscon_base = fdt_translate_address((void *)gd->fdt_blob, offset, reg);
-	if (syscon_base == FDT_ADDR_T_NONE) {
+	priv->sysctl_reg = (void *)fdt_translate_address((void *)gd->fdt_blob,
+						 offset, reg);
+	if (priv->sysctl_reg == (void *)FDT_ADDR_T_NONE) {
 		debug("%s: Cannot find syscon base address\n", __func__);
 		return -EINVAL;
 	}
@@ -897,6 +912,8 @@ static int sun8i_emac_eth_of_to_plat(struct udevice *dev)
 
 static const struct udevice_id sun8i_emac_eth_ids[] = {
 	{.compatible = "allwinner,sun8i-h3-emac", .data = (uintptr_t)H3_EMAC },
+	{.compatible = "allwinner,sun20i-d1-emac",
+		.data = (uintptr_t)A64_EMAC },
 	{.compatible = "allwinner,sun50i-a64-emac",
 		.data = (uintptr_t)A64_EMAC },
 	{.compatible = "allwinner,sun8i-a83t-emac",
