@@ -60,8 +60,10 @@ static int axp_pmic_bind(struct udevice *dev)
 		return ret;
 
 	regulators_node = dev_read_subnode(dev, "regulators");
-	if (ofnode_valid(regulators_node))
-		pmic_bind_children(dev, regulators_node, axp_pmic_child_info);
+	if (!ofnode_valid(regulators_node))
+		return -ENXIO;
+
+	pmic_bind_children(dev, regulators_node, axp_pmic_child_info);
 
 	if (CONFIG_IS_ENABLED(SYSRESET)) {
 		ret = device_bind_driver_to_node(dev, "axp_sysreset", "axp_sysreset",
