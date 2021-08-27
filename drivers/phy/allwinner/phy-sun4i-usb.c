@@ -96,8 +96,32 @@ struct sun4i_usb_phy_cfg {
 	int missing_phys;
 };
 
+struct sun4i_usb_phy_info {
+	const char *gpio_vbus_det;
+	const char *gpio_id_det;
+} phy_info[] = {
+	{
+		.gpio_vbus_det = CONFIG_USB0_VBUS_DET,
+		.gpio_id_det = CONFIG_USB0_ID_DET,
+	},
+	{
+		.gpio_vbus_det = NULL,
+		.gpio_id_det = NULL,
+	},
+	{
+		.gpio_vbus_det = NULL,
+		.gpio_id_det = NULL,
+	},
+	{
+		.gpio_vbus_det = NULL,
+		.gpio_id_det = NULL,
+	},
+};
+
 struct sun4i_usb_phy_plat {
 	void __iomem *pmu;
+	int gpio_vbus_det;
+	int gpio_id_det;
 	struct clk clocks;
 	struct reset_ctl resets;
 	struct udevice *vbus;
@@ -198,17 +222,8 @@ static int sun4i_usb_phy_power_on(struct phy *phy)
 		initial_usb_scan_delay = 0;
 	}
 
-	/* For phy0 only turn on Vbus if we don't have an ext. Vbus */
-	if (phy->id == 0 && sun4i_usb_phy_vbus_detect(phy)) {
-		dev_warn(phy->dev, "External vbus detected, not enabling our own vbus\n");
-		return 0;
-	}
-
-	if (usb_phy->vbus) {
-		ret = regulator_set_enable(usb_phy->vbus, true);
-		if (ret && ret != -ENOSYS)
-			return ret;
-	}
+	if (usb_phy->vbus)
+		return regulator_set_enable(usb_phy->vbus, true);
 
 	return 0;
 }
@@ -219,11 +234,8 @@ static int sun4i_usb_phy_power_off(struct phy *phy)
 	struct sun4i_usb_phy_plat *usb_phy = &data->usb_phy[phy->id];
 	int ret;
 
-	if (usb_phy->vbus) {
-		ret = regulator_set_enable(usb_phy->vbus, false);
-		if (ret && ret != -ENOSYS)
-			return ret;
-	}
+	if (usb_phy->vbus)
+		return regulator_set_enable(usb_phy->vbus, false);
 
 	return 0;
 }
@@ -440,6 +452,7 @@ static int sun4i_usb_phy_probe(struct udevice *dev)
 	data->usb_phy = plat;
 	for (i = 0; i < data->cfg->num_phys; i++) {
 		struct sun4i_usb_phy_plat *phy = &plat[i];
+		struct sun4i_usb_phy_info *info = &phy_info[i];
 		char name[20];
 
 		if (data->cfg->missing_phys & BIT(i))
@@ -449,8 +462,30 @@ static int sun4i_usb_phy_probe(struct udevice *dev)
 		ret = device_get_supply_regulator(dev, name, &phy->vbus);
 		if (phy->vbus) {
 			ret = regulator_set_enable(phy->vbus, false);
+			/* Fixed regulators cannot be disabled. */
 			if (ret && ret != -ENOSYS)
 				return ret;
+		}
+
+		phy->gpio_vbus_det = sunxi_name_to_gpio(info->gpio_vbus_det);
+		if (phy->gpio_vbus_det >= 0) {
+			ret = gpio_request(phy->gpio_vbus_det, "usb_vbus_det");
+			if (ret)
+				return ret;
+			ret = gpio_direction_input(phy->gpio_vbus_det);
+			if (ret)
+				return ret;
+		}
+
+		phy->gpio_id_det = sunxi_name_to_gpio(info->gpio_id_det);
+		if (phy->gpio_id_det >= 0) {
+			ret = gpio_request(phy->gpio_id_det, "usb_id_det");
+			if (ret)
+				return ret;
+			ret = gpio_direction_input(phy->gpio_id_det);
+			if (ret)
+				return ret;
+			sunxi_gpio_set_pull(phy->gpio_id_det, SUNXI_GPIO_PULL_UP);
 		}
 
 		if (data->cfg->dedicated_clocks)
