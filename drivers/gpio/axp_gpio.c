@@ -24,7 +24,6 @@ struct axp_gpio_desc {
 	u8		npins;
 	u8		status_reg;
 	u8		status_offset;
-	u8		pull_reg;
 	u8		input_mux;
 };
 
@@ -33,15 +32,6 @@ static int axp_gpio_get_value(struct udevice *dev, unsigned pin)
 	const struct axp_gpio_desc *desc = dev_get_priv(dev);
 	int ret;
 
-	ret = pmic_reg_read(dev->parent, desc->pins[pin]);
-	if (ret < 0)
-		return ret;
-
-	if (ret == AXP_GPIO_CTRL_OUTPUT_LOW)
-		return 0;
-	if (ret == AXP_GPIO_CTRL_OUTPUT_HIGH)
-		return 1;
-
 	ret = pmic_reg_read(dev->parent, desc->status_reg);
 	if (ret < 0)
 		return ret;
@@ -49,42 +39,13 @@ static int axp_gpio_get_value(struct udevice *dev, unsigned pin)
 	return !!(ret & BIT(desc->status_offset + pin));
 }
 
-static int axp_gpio_get_function(struct udevice *dev, unsigned pin)
-{
-	const struct axp_gpio_desc *desc = dev_get_priv(dev);
-	int ret;
-
-	ret = pmic_reg_read(dev->parent, desc->pins[pin]);
-	if (ret < 0)
-		return ret;
-
-	ret &= AXP_GPIO_CTRL_MASK;
-	if (ret == desc->input_mux)
-		return GPIOF_INPUT;
-	if (ret == AXP_GPIO_CTRL_OUTPUT_HIGH || ret == AXP_GPIO_CTRL_OUTPUT_LOW)
-		return GPIOF_OUTPUT;
-
-	return GPIOF_UNKNOWN;
-}
-
 static int axp_gpio_set_flags(struct udevice *dev, unsigned pin, ulong flags)
 {
 	const struct axp_gpio_desc *desc = dev_get_priv(dev);
-	bool pull_down = flags & GPIOD_PULL_DOWN;
-	int ret;
 	u8 mux;
 
-	if (flags & (GPIOD_MASK_DSTYPE | GPIOD_PULL_UP))
+	if (flags & (GPIOD_MASK_DSTYPE | GPIOD_MASK_PULL))
 		return -EINVAL;
-	if (pull_down && !desc->pull_reg)
-		return -EINVAL;
-
-	if (desc->pull_reg) {
-		ret = pmic_clrsetbits(dev->parent, desc->pull_reg,
-				      BIT(pin), pull_down ? BIT(pin) : 0);
-		if (ret)
-			return ret;
-	}
 
 	if (flags & GPIOD_IS_IN)
 		mux = desc->input_mux;
@@ -99,7 +60,6 @@ static int axp_gpio_set_flags(struct udevice *dev, unsigned pin, ulong flags)
 
 static const struct dm_gpio_ops axp_gpio_ops = {
 	.get_value		= axp_gpio_get_value,
-	.get_function		= axp_gpio_get_function,
 	.xlate			= gpio_xlate_offs_flags,
 	.set_flags		= axp_gpio_set_flags,
 };
@@ -150,7 +110,6 @@ static const struct axp_gpio_desc axp221_gpio_desc = {
 	.pins		= axp221_gpio_pins,
 	.npins		= ARRAY_SIZE(axp221_gpio_pins),
 	.status_reg	= 0x94,
-	.pull_reg	= 0x97,
 	.input_mux	= 2,
 };
 
