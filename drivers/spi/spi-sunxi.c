@@ -396,6 +396,35 @@ static int sun4i_spi_set_speed(struct udevice *dev, uint speed)
 
 	if (speed < SUN4I_SPI_MIN_RATE)
 		speed = SUN4I_SPI_MIN_RATE;
+	/*
+	 * Setup clock divider.
+	 *
+	 * We have two choices there. Either we can use the clock
+	 * divide rate 1, which is calculated thanks to this formula:
+	 * SPI_CLK = MOD_CLK / (2 ^ (cdr + 1))
+	 * Or we can use CDR2, which is calculated with the formula:
+	 * SPI_CLK = MOD_CLK / (2 * (cdr + 1))
+	 * Whether we use the former or the latter is set through the
+	 * DRS bit.
+	 *
+	 * First try CDR2, and if we can't reach the expected
+	 * frequency, fall back to CDR1.
+	 */
+
+	div = SUN4I_SPI_MAX_RATE / (2 * speed);
+	reg = readl(SPI_REG(priv, SPI_CCR));
+
+	if (div <= (SUN4I_CLK_CTL_CDR2_MASK + 1)) {
+		if (div > 0)
+			div--;
+
+		reg &= ~(SUN4I_CLK_CTL_CDR2_MASK | SUN4I_CLK_CTL_DRS);
+		reg |= SUN4I_CLK_CTL_CDR2(div) | SUN4I_CLK_CTL_DRS;
+	} else {
+		div = ilog2(SUN4I_SPI_MAX_RATE) - ilog2(speed);
+		reg &= ~((SUN4I_CLK_CTL_CDR1_MASK << 8) | SUN4I_CLK_CTL_DRS);
+		reg |= SUN4I_CLK_CTL_CDR1(div);
+	}
 
 	priv->freq = speed;
 
