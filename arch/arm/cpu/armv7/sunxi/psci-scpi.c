@@ -24,11 +24,7 @@
 #define MPIDR_AFFLVL0(mpidr)	(mpidr & 0xf)
 #define MPIDR_AFFLVL1(mpidr)	(mpidr >> 8 & 0xf)
 
-#if defined(CONFIG_MACH_SUN8I_H3)
 #define SCPI_SHMEM_BASE		0x0004be00
-#else
-#define SCPI_SHMEM_BASE		0x00053e00
-#endif
 #define SCPI_SHMEM		((struct scpi_shmem *)SCPI_SHMEM_BASE)
 
 #define SCPI_RX_CHANNEL		1
@@ -402,12 +398,12 @@ static void __secure sunxi_set_entry_address(void *entry)
 
 	writel((u32)entry, &cpucfg->priv0);
 
-#ifdef CONFIG_MACH_SUN8I_H3
-	/* Redirect CPU 0 to the secure monitor via the resume shim. */
-	writel(0x16aaefe8, &cpucfg->super_standy_flag);
-	writel(0xaa16efe8, &cpucfg->super_standy_flag);
-	writel(SUNXI_RESUME_BASE, &cpucfg->priv1);
-#endif
+	if (IS_ENABLED(CONFIG_MACH_SUN8I_H3)) {
+		/* Redirect CPU 0 to the secure monitor via the resume shim. */
+		writel(0x16aaefe8, &cpucfg->super_standy_flag);
+		writel(0xaa16efe8, &cpucfg->super_standy_flag);
+		writel(SUNXI_RESUME_BASE, &cpucfg->priv1);
+	}
 }
 #endif
 

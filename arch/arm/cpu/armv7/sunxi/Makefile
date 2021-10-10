@@ -13,7 +13,7 @@ obj-$(CONFIG_MACH_SUN6I)	+= sram.o
 obj-$(CONFIG_MACH_SUN8I)	+= sram.o
 
 ifndef CONFIG_SPL_BUILD
-ifneq ($(CONFIG_MACH_SUN8I_A33)$(CONFIG_MACH_SUN8I_H3),)
+ifdef CONFIG_MACH_SUN8I_H3
 obj-$(CONFIG_ARMV7_PSCI)	+= psci-scpi.o
 else
 obj-$(CONFIG_ARMV7_PSCI)	+= psci.o
