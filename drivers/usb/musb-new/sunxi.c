@@ -249,6 +249,12 @@ static int sunxi_musb_enable(struct musb *musb)
 			return -ENODEV;
 		}
 
+		ret = sun4i_usb_phy_vbus_detect(&glue->phy);
+		if (ret == 1) {
+			printf("A charger is plugged into the OTG: not enabling VBUS\n");
+			return 0;
+		}
+
 		ret = generic_phy_power_on(&glue->phy);
 		if (ret) {
 			pr_debug("failed to power on USB PHY\n");
