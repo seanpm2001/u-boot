@@ -12,18 +12,11 @@
 		     "allwinner,sun20i-d1";
 
 	aliases {
-		ethernet1 = &rtl8723ds;
+		mmc1 = &mmc1;
 	};
 
-	dmic_codec: dmic-codec {
-		compatible = "dmic-codec";
-		num-channels = <2>;
-		#sound-dai-cells = <0>;
-	};
-
-	dmic-sound {
+	dmic-card {
 		compatible = "simple-audio-card";
-		simple-audio-card,name = "DMIC";
 		#address-cells = <1>;
 		#size-cells = <0>;
 
@@ -42,32 +35,38 @@
 		};
 	};
 
+	dmic_codec: dmic-codec {
+		compatible = "dmic-codec";
+		num-channels = <2>;
+		#sound-dai-cells = <0>;
+	};
+
 	hdmi_connector: connector {
 		compatible = "hdmi-connector";
 		type = "a";
 
 		port {
-			hdmi_connector_in: endpoint {
-				remote-endpoint = <&hdmi_out_connector>;
+			hdmi_con_in: endpoint {
+				remote-endpoint = <&hdmi_out_con>;
 			};
 		};
 	};
 
 	wifi_pwrseq: wifi-pwrseq {
 		compatible = "mmc-pwrseq-simple";
-		reset-gpios = <&pio 6 12 GPIO_ACTIVE_LOW>; /* PG12 */
+		reset-gpios = <&gpio 6 12 GPIO_ACTIVE_LOW>; /* PG12 */
 	};
 };
 
 &codec {
-	routing = "Internal Speaker", "HPOUTL",
-		  "Internal Speaker", "HPOUTR",
-		  "LINEINL", "HPOUTL",
-		  "LINEINR", "HPOUTR",
-		  "MICIN3", "Internal Microphone",
-		  "Internal Microphone", "HBIAS";
-	widgets = "Microphone", "Internal Microphone",
-		  "Speaker", "Internal Speaker";
+	allwinner,routing = "Internal Speaker", "HPOUTL",
+			    "Internal Speaker", "HPOUTR",
+			    "LINEINL", "HPOUTL",
+			    "LINEINR", "HPOUTR",
+			    "MICIN3", "Internal Microphone",
+			    "Internal Microphone", "HBIAS";
+	allwinner,widgets = "Microphone", "Internal Microphone",
+			    "Speaker", "Internal Speaker";
 	status = "okay";
 };
 
@@ -85,13 +84,30 @@
 	status = "okay";
 };
 
-&hdmi {
-	status = "okay";
+&gpio {
+	dmic_pb11_d0_pin: dmic-pb11-d0-pin {
+		pins = "PB11";
+		function = "dmic";
+	};
+
+	dmic_pe17_clk_pin: dmic-pe17-clk-pin {
+		pins = "PE17";
+		function = "dmic";
+	};
+
+	ledc_pc0_pin: ledc-pc0-pin {
+		pins = "PC0";
+		function = "ledc";
+	};
 };
 
-&hdmi_out {
-	hdmi_out_connector: endpoint {
-		remote-endpoint = <&hdmi_connector_in>;
+&hdmi {
+	status = "okay";
+
+	port {
+		hdmi_out_con: endpoint {
+			remote-endpoint = <&hdmi_con_in>;
+		};
 	};
 };
 
@@ -104,7 +120,7 @@
 	pinctrl-names = "default";
 	status = "okay";
 
-	multi-led@0 {
+	led@0 {
 		reg = <0x0>;
 		color = <LED_COLOR_ID_RGB>;
 		function = LED_FUNCTION_STATUS;
@@ -112,6 +128,7 @@
 };
 
 &lradc {
+	wakeup-source;
 	status = "okay";
 
 	button-220 {
@@ -131,40 +148,16 @@
 	pinctrl-0 = <&mmc1_pins>;
 	pinctrl-names = "default";
 	status = "okay";
-
-	rtl8723ds: wifi@1 {
-		reg = <1>;
-	};
 };
 
 &ohci1 {
 	status = "okay";
 };
 
-&pio {
-	dmic_pb11_d0_pin: dmic-pb11-d0-pin {
-		pins = "PB11";
-		function = "dmic";
-	};
-
-	dmic_pe17_clk_pin: dmic-pe17-clk-pin {
-		pins = "PE17";
-		function = "dmic";
-	};
-};
-
 &uart1 {
-	uart-has-rtscts;
 	pinctrl-0 = <&uart1_pg6_pins>, <&uart1_pg8_rts_cts_pins>;
 	pinctrl-names = "default";
 	status = "okay";
-
-	bluetooth {
-		compatible = "realtek,rtl8723ds-bt";
-		device-wake-gpios = <&pio 6 15 GPIO_ACTIVE_HIGH>; /* PG16 */
-		enable-gpios = <&pio 6 18 GPIO_ACTIVE_HIGH>; /* PG18 */
-		host-wake-gpios = <&pio 6 17 GPIO_ACTIVE_HIGH>; /* PG17 */
-	};
 };
 
 &usbphy {
