@@ -112,6 +112,7 @@ extern const struct ccu_desc a64_ccu_desc;
 extern const struct ccu_desc a80_ccu_desc;
 extern const struct ccu_desc a80_mmc_clk_desc;
 extern const struct ccu_desc a83t_ccu_desc;
+extern const struct ccu_desc d1_ccu_desc;
 extern const struct ccu_desc h3_ccu_desc;
 extern const struct ccu_desc h6_ccu_desc;
 extern const struct ccu_desc h616_ccu_desc;
@@ -175,6 +176,10 @@ static const struct udevice_id sunxi_clk_ids[] = {
 	  .data = (ulong)&a80_ccu_desc },
 	{ .compatible = "allwinner,sun9i-a80-mmc-config-clk",
 	  .data = (ulong)&a80_mmc_clk_desc },
+#endif
+#ifdef CONFIG_CLK_SUN20I_D1
+	{ .compatible = "allwinner,sun20i-d1-ccu",
+	  .data = (ulong)&d1_ccu_desc },
 #endif
 #ifdef CONFIG_CLK_SUN50I_A64
 	{ .compatible = "allwinner,sun50i-a64-ccu",
