@@ -100,11 +100,6 @@ const struct ccu_desc h3_ccu_desc = {
 	.num_resets = ARRAY_SIZE(h3_resets),
 };
 
-static int h3_clk_bind(struct udevice *dev)
-{
-	return sunxi_reset_bind(dev, ARRAY_SIZE(h3_resets));
-}
-
 static const struct udevice_id h3_ccu_ids[] = {
 	{ .compatible = "allwinner,sun8i-h3-ccu",
 	  .data = (ulong)&h3_ccu_desc },
@@ -120,5 +115,5 @@ U_BOOT_DRIVER(clk_sun8i_h3) = {
 	.priv_auto	= sizeof(struct ccu_priv),
 	.ops		= &sunxi_clk_ops,
 	.probe		= sunxi_clk_probe,
-	.bind		= h3_clk_bind,
+	.bind		= sunxi_clk_bind,
 };

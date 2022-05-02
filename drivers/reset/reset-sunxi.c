@@ -15,7 +15,12 @@
 #include <linux/bitops.h>
 #include <linux/log2.h>
 
-static const struct ccu_reset *plat_to_reset(struct ccu_plat *plat,
+struct sunxi_reset_priv {
+	void *base;
+	const struct ccu_desc *desc;
+};
+
+static const struct ccu_reset *priv_to_reset(struct sunxi_reset_priv *priv,
 					     unsigned long id)
 {
 	return	&plat->desc->resets[id];
@@ -27,7 +32,7 @@ static int sunxi_reset_request(struct reset_ctl *reset_ctl)
 
 	debug("%s: (RST#%ld)\n", __func__, reset_ctl->id);
 
-	if (reset_ctl->id >= plat->desc->num_resets)
+	if (reset_ctl->id >= priv->desc->num_resets)
 		return -EINVAL;
 
 	return 0;
@@ -73,6 +78,34 @@ struct reset_ops sunxi_reset_ops = {
 	.rst_assert = sunxi_reset_assert,
 	.rst_deassert = sunxi_reset_deassert,
 };
+
+static int sunxi_reset_probe(struct udevice *dev)
+{
+	struct sunxi_reset_priv *priv = dev_get_priv(dev);
+
+	priv->base = dev_read_addr_ptr(dev);
+
+	return 0;
+}
+
+int sunxi_reset_bind(struct udevice *dev)
+{
+	struct udevice *rst_dev;
+	struct sunxi_reset_priv *priv;
+	int ret;
+
+	ret = device_bind_driver_to_node(dev, "sunxi_reset", "reset",
+					 dev_ofnode(dev), &rst_dev);
+	if (ret) {
+		debug("failed to bind sunxi_reset driver (ret=%d)\n", ret);
+		return ret;
+	}
+	priv = malloc(sizeof(struct sunxi_reset_priv));
+	priv->desc = (const struct ccu_desc *)dev_get_driver_data(dev);
+	dev_set_priv(rst_dev, priv);
+
+	return 0;
+}
 
 U_BOOT_DRIVER(sunxi_reset) = {
 	.name		= "sunxi_reset",

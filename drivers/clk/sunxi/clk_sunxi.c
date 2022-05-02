@@ -68,14 +68,12 @@ struct clk_ops sunxi_clk_ops = {
 	.disable = sunxi_clk_disable,
 };
 
-static int sunxi_clk_bind(struct udevice *dev)
+int sunxi_clk_bind(struct udevice *dev)
 {
-	/* Reuse the platform data for the reset driver. */
-	return device_bind(dev, DM_DRIVER_REF(sunxi_reset), "reset",
-			   dev_get_plat(dev), dev_ofnode(dev), NULL);
+	return sunxi_reset_bind(dev);
 }
 
-static int sunxi_clk_probe(struct udevice *dev)
+int sunxi_clk_probe(struct udevice *dev)
 {
 	struct clk_bulk clk_bulk;
 	struct reset_ctl_bulk rst_bulk;
