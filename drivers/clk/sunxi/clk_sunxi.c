@@ -21,10 +21,10 @@ extern U_BOOT_DRIVER(sunxi_reset);
 static const struct ccu_clk_gate *plat_to_gate(struct ccu_plat *plat,
 					       unsigned long id)
 {
-	if (id >= plat->desc->num_gates)
+	if (id >= priv->desc->num_gates)
 		return NULL;
 
-	return &plat->desc->gates[id];
+	return &priv->desc->gates[id];
 }
 
 static int sunxi_set_gate(struct clk *clk, bool on)
@@ -33,11 +33,9 @@ static int sunxi_set_gate(struct clk *clk, bool on)
 	const struct ccu_clk_gate *gate = plat_to_gate(plat, clk->id);
 	u32 reg;
 
-	if (gate && (gate->flags & CCU_CLK_F_DUMMY_GATE))
-		return 0;
-
 	if (!gate || !(gate->flags & CCU_CLK_F_IS_VALID)) {
-		printf("%s: (CLK#%ld) unhandled\n", __func__, clk->id);
+		if (!gate || !(gate->flags & CCU_CLK_F_DUMMY_GATE))
+			printf("%s: (CLK#%ld) unhandled\n", __func__, clk->id);
 		return 0;
 	}
 
