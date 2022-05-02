@@ -57,21 +57,3 @@ const struct ccu_desc a10s_ccu_desc = {
 	.num_gates = ARRAY_SIZE(a10s_gates),
 	.num_resets = ARRAY_SIZE(a10s_resets),
 };
-
-static const struct udevice_id a10s_ccu_ids[] = {
-	{ .compatible = "allwinner,sun5i-a10s-ccu",
-	  .data = (ulong)&a10s_ccu_desc },
-	{ .compatible = "allwinner,sun5i-a13-ccu",
-	  .data = (ulong)&a10s_ccu_desc },
-	{ }
-};
-
-U_BOOT_DRIVER(clk_sun5i_a10s) = {
-	.name		= "sun5i_a10s_ccu",
-	.id		= UCLASS_CLK,
-	.of_match	= a10s_ccu_ids,
-	.priv_auto	= sizeof(struct ccu_priv),
-	.ops		= &sunxi_clk_ops,
-	.probe		= sunxi_clk_probe,
-	.bind		= sunxi_clk_bind,
-};

@@ -99,21 +99,3 @@ const struct ccu_desc h3_ccu_desc = {
 	.num_gates = ARRAY_SIZE(h3_gates),
 	.num_resets = ARRAY_SIZE(h3_resets),
 };
-
-static const struct udevice_id h3_ccu_ids[] = {
-	{ .compatible = "allwinner,sun8i-h3-ccu",
-	  .data = (ulong)&h3_ccu_desc },
-	{ .compatible = "allwinner,sun50i-h5-ccu",
-	  .data = (ulong)&h3_ccu_desc },
-	{ }
-};
-
-U_BOOT_DRIVER(clk_sun8i_h3) = {
-	.name		= "sun8i_h3_ccu",
-	.id		= UCLASS_CLK,
-	.of_match	= h3_ccu_ids,
-	.priv_auto	= sizeof(struct ccu_priv),
-	.ops		= &sunxi_clk_ops,
-	.probe		= sunxi_clk_probe,
-	.bind		= sunxi_clk_bind,
-};

@@ -95,21 +95,3 @@ const struct ccu_desc a80_mmc_clk_desc = {
 	.num_gates = ARRAY_SIZE(a80_mmc_gates),
 	.num_resets = ARRAY_SIZE(a80_mmc_resets),
 };
-
-static const struct udevice_id a80_ccu_ids[] = {
-	{ .compatible = "allwinner,sun9i-a80-ccu",
-	  .data = (ulong)&a80_ccu_desc },
-	{ .compatible = "allwinner,sun9i-a80-mmc-config-clk",
-	  .data = (ulong)&a80_mmc_clk_desc },
-	{ }
-};
-
-U_BOOT_DRIVER(clk_sun9i_a80) = {
-	.name		= "sun9i_a80_ccu",
-	.id		= UCLASS_CLK,
-	.of_match	= a80_ccu_ids,
-	.priv_auto	= sizeof(struct ccu_priv),
-	.ops		= &sunxi_clk_ops,
-	.probe		= sunxi_clk_probe,
-	.bind		= sunxi_clk_bind,
-};

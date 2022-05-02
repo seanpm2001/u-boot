@@ -34,23 +34,3 @@ const struct ccu_desc a31_r_ccu_desc = {
 	.num_gates = ARRAY_SIZE(a31_r_gates),
 	.num_resets = ARRAY_SIZE(a31_r_resets),
 };
-
-static const struct udevice_id a31_r_clk_ids[] = {
-	{ .compatible = "allwinner,sun8i-a83t-r-ccu",
-	  .data = (ulong)&a31_r_ccu_desc },
-	{ .compatible = "allwinner,sun8i-h3-r-ccu",
-	  .data = (ulong)&a31_r_ccu_desc },
-	{ .compatible = "allwinner,sun50i-a64-r-ccu",
-	  .data = (ulong)&a31_r_ccu_desc },
-	{ }
-};
-
-U_BOOT_DRIVER(clk_sun6i_a31_r) = {
-	.name		= "sun6i_a31_r_ccu",
-	.id		= UCLASS_CLK,
-	.of_match	= a31_r_clk_ids,
-	.priv_auto	= sizeof(struct ccu_priv),
-	.ops		= &sunxi_clk_ops,
-	.probe		= sunxi_clk_probe,
-	.bind		= sunxi_clk_bind,
-};

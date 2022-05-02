@@ -68,12 +68,12 @@ struct clk_ops sunxi_clk_ops = {
 	.disable = sunxi_clk_disable,
 };
 
-int sunxi_clk_bind(struct udevice *dev)
+static int sunxi_clk_bind(struct udevice *dev)
 {
 	return sunxi_reset_bind(dev);
 }
 
-int sunxi_clk_probe(struct udevice *dev)
+static int sunxi_clk_probe(struct udevice *dev)
 {
 	struct clk_bulk clk_bulk;
 	struct reset_ctl_bulk rst_bulk;
@@ -90,21 +90,6 @@ int sunxi_clk_probe(struct udevice *dev)
 	return 0;
 }
 
-static int sunxi_clk_of_to_plat(struct udevice *dev)
-{
-	struct ccu_plat *plat = dev_get_plat(dev);
-
-	plat->base = dev_read_addr_ptr(dev);
-	if (!plat->base)
-		return -ENOMEM;
-
-	plat->desc = (const struct ccu_desc *)dev_get_driver_data(dev);
-	if (!plat->desc)
-		return -EINVAL;
-
-	return 0;
-}
-
 extern const struct ccu_desc a10_ccu_desc;
 extern const struct ccu_desc a10s_ccu_desc;
 extern const struct ccu_desc a23_ccu_desc;
@@ -114,8 +99,6 @@ extern const struct ccu_desc a64_ccu_desc;
 extern const struct ccu_desc a80_ccu_desc;
 extern const struct ccu_desc a80_mmc_clk_desc;
 extern const struct ccu_desc a83t_ccu_desc;
-extern const struct ccu_desc d1_ccu_desc;
-extern const struct ccu_desc f1c100s_ccu_desc;
 extern const struct ccu_desc h3_ccu_desc;
 extern const struct ccu_desc h6_ccu_desc;
 extern const struct ccu_desc h616_ccu_desc;
@@ -180,10 +163,6 @@ static const struct udevice_id sunxi_clk_ids[] = {
 	{ .compatible = "allwinner,sun9i-a80-mmc-config-clk",
 	  .data = (ulong)&a80_mmc_clk_desc },
 #endif
-#ifdef CONFIG_CLK_SUN20I_D1
-	{ .compatible = "allwinner,sun20i-d1-ccu",
-	  .data = (ulong)&d1_ccu_desc },
-#endif
 #ifdef CONFIG_CLK_SUN50I_A64
 	{ .compatible = "allwinner,sun50i-a64-ccu",
 	  .data = (ulong)&a64_ccu_desc },
@@ -212,10 +191,6 @@ static const struct udevice_id sunxi_clk_ids[] = {
 	{ .compatible = "allwinner,sun50i-h616-r-ccu",
 	  .data = (ulong)&h6_r_ccu_desc },
 #endif
-#ifdef CONFIG_CLK_SUNIV_F1C100S
-	{ .compatible = "allwinner,suniv-f1c100s-ccu",
-	  .data = (ulong)&f1c100s_ccu_desc },
-#endif
 	{ }
 };
 
@@ -225,7 +200,6 @@ U_BOOT_DRIVER(sunxi_clk) = {
 	.of_match	= sunxi_clk_ids,
 	.bind		= sunxi_clk_bind,
 	.probe		= sunxi_clk_probe,
-	.of_to_plat	= sunxi_clk_of_to_plat,
-	.plat_auto	= sizeof(struct ccu_plat),
+	.priv_auto	= sizeof(struct ccu_priv),
 	.ops		= &sunxi_clk_ops,
 };

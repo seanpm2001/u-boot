@@ -72,21 +72,3 @@ const struct ccu_desc a10_ccu_desc = {
 	.num_gates = ARRAY_SIZE(a10_gates),
 	.num_resets = ARRAY_SIZE(a10_resets),
 };
-
-static const struct udevice_id a10_ccu_ids[] = {
-	{ .compatible = "allwinner,sun4i-a10-ccu",
-	  .data = (ulong)&a10_ccu_desc },
-	{ .compatible = "allwinner,sun7i-a20-ccu",
-	  .data = (ulong)&a10_ccu_desc },
-	{ }
-};
-
-U_BOOT_DRIVER(clk_sun4i_a10) = {
-	.name		= "sun4i_a10_ccu",
-	.id		= UCLASS_CLK,
-	.of_match	= a10_ccu_ids,
-	.priv_auto	= sizeof(struct ccu_priv),
-	.ops		= &sunxi_clk_ops,
-	.probe		= sunxi_clk_probe,
-	.bind		= sunxi_clk_bind,
-};

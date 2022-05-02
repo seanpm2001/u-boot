@@ -108,19 +108,3 @@ const struct ccu_desc r40_ccu_desc = {
 	.num_gates = ARRAY_SIZE(r40_gates),
 	.num_resets = ARRAY_SIZE(r40_resets),
 };
-
-static const struct udevice_id r40_clk_ids[] = {
-	{ .compatible = "allwinner,sun8i-r40-ccu",
-	  .data = (ulong)&r40_ccu_desc },
-	{ }
-};
-
-U_BOOT_DRIVER(clk_sun8i_r40) = {
-	.name		= "sun8i_r40_ccu",
-	.id		= UCLASS_CLK,
-	.of_match	= r40_clk_ids,
-	.priv_auto	= sizeof(struct ccu_priv),
-	.ops		= &sunxi_clk_ops,
-	.probe		= sunxi_clk_probe,
-	.bind		= sunxi_clk_bind,
-};
