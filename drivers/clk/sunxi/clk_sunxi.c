@@ -16,15 +16,13 @@
 #include <linux/bitops.h>
 #include <linux/log2.h>
 
-extern U_BOOT_DRIVER(sunxi_reset);
-
 static const struct ccu_clk_gate *plat_to_gate(struct ccu_plat *plat,
 					       unsigned long id)
 {
-	if (id >= priv->desc->num_gates)
+	if (id >= plat->desc->num_gates)
 		return NULL;
 
-	return &priv->desc->gates[id];
+	return &plat->desc->gates[id];
 }
 
 static int sunxi_set_gate(struct clk *clk, bool on)
@@ -86,6 +84,21 @@ static int sunxi_clk_probe(struct udevice *dev)
 	ret = reset_get_bulk(dev, &rst_bulk);
 	if (!ret)
 		reset_deassert_bulk(&rst_bulk);
+
+	return 0;
+}
+
+static int sunxi_clk_of_to_plat(struct udevice *dev)
+{
+	struct ccu_plat *plat = dev_get_plat(dev);
+
+	plat->base = dev_read_addr_ptr(dev);
+	if (!plat->base)
+		return -ENOMEM;
+
+	plat->desc = (const struct ccu_desc *)dev_get_driver_data(dev);
+	if (!plat->desc)
+		return -EINVAL;
 
 	return 0;
 }
@@ -200,6 +213,7 @@ U_BOOT_DRIVER(sunxi_clk) = {
 	.of_match	= sunxi_clk_ids,
 	.bind		= sunxi_clk_bind,
 	.probe		= sunxi_clk_probe,
-	.priv_auto	= sizeof(struct ccu_priv),
+	.of_to_plat	= sunxi_clk_of_to_plat,
+	.plat_auto	= sizeof(struct ccu_plat),
 	.ops		= &sunxi_clk_ops,
 };
