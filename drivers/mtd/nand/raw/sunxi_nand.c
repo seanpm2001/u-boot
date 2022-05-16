@@ -30,7 +30,6 @@
 #include <malloc.h>
 #include <memalign.h>
 #include <nand.h>
-#include <reset.h>
 #include <dm/device_compat.h>
 #include <dm/devres.h>
 #include <linux/bitops.h>
@@ -1604,8 +1603,7 @@ static int sunxi_nand_ecc_init(struct mtd_info *mtd, struct nand_ecc_ctrl *ecc)
 	return 0;
 }
 
-static int sunxi_nand_chip_init(struct udevice *dev, struct sunxi_nfc *nfc,
-				ofnode np, int devnum)
+static int sunxi_nand_chip_init(ofnode np, struct sunxi_nfc *nfc, int devnum)
 {
 	const struct nand_sdr_timings *timings;
 	struct sunxi_nand_chip *chip;
@@ -1639,7 +1637,7 @@ static int sunxi_nand_chip_init(struct udevice *dev, struct sunxi_nfc *nfc,
 	for (i = 0; i < nsels; i++) {
 		ret = ofnode_read_u32_index(np, "reg", i, &tmp);
 		if (ret) {
-			dev_err(dev, "could not retrieve reg property: %d\n",
+			dev_err(nfc->dev, "could not retrieve reg property: %d\n",
 				ret);
 			return ret;
 		}
@@ -1662,9 +1660,10 @@ static int sunxi_nand_chip_init(struct udevice *dev, struct sunxi_nfc *nfc,
 			chip->sels[i].rb.type = RB_NATIVE;
 			chip->sels[i].rb.info.nativeid = tmp;
 		} else {
-			ret = gpio_request_by_name(dev, "rb-gpios", i,
-						   &chip->sels[i].rb.info.gpio,
-						   GPIOD_IS_IN);
+			ret = gpio_request_by_name_nodev(np,
+						"rb-gpios", i,
+						&chip->sels[i].rb.info.gpio,
+						GPIOD_IS_IN);
 			if (ret)
 				chip->sels[i].rb.type = RB_GPIO;
 			else
@@ -1745,13 +1744,13 @@ static int sunxi_nand_chip_init(struct udevice *dev, struct sunxi_nfc *nfc,
 	return 0;
 }
 
-static int sunxi_nand_chips_init(struct udevice *dev, struct sunxi_nfc *nfc)
+static int sunxi_nand_chips_init(ofnode node, struct sunxi_nfc *nfc)
 {
 	ofnode nand_np;
 	int ret, i = 0;
 
-	dev_for_each_subnode(nand_np, dev) {
-		ret = sunxi_nand_chip_init(dev, nfc, nand_np, i++);
+	ofnode_for_each_subnode(nand_np, node) {
+		ret = sunxi_nand_chip_init(nand_np, nfc, i++);
 		if (ret)
 			return ret;
 	}
@@ -1777,9 +1776,9 @@ static void sunxi_nand_chips_cleanup(struct sunxi_nfc *nfc)
 
 static int sunxi_nand_probe(struct udevice *dev)
 {
-	struct sunxi_nfc *nfc = dev_get_priv(dev);
-	struct reset_ctl_bulk rst_bulk;
-	struct clk_bulk clk_bulk;
+	struct sunxi_nfc *nfc;
+	phys_addr_t regs;
+	ofnode node;
 	int ret;
 
 	nfc->dev = dev;
@@ -1787,17 +1786,24 @@ static int sunxi_nand_probe(struct udevice *dev)
 	init_waitqueue_head(&nfc->controller.wq);
 	INIT_LIST_HEAD(&nfc->chips);
 
-	nfc->regs = dev_read_addr_ptr(dev);
-	if (!nfc->regs)
-		return -EINVAL;
+	node = ofnode_by_compatible(ofnode_null(), "allwinner,sun4i-a10-nand");
+	if (!ofnode_valid(node)) {
+		pr_err("unable to find nfc node in device tree\n");
+		goto err;
+	}
 
-	ret = reset_get_bulk(dev, &rst_bulk);
-	if (!ret)
-		reset_deassert_bulk(&rst_bulk);
+	if (!ofnode_is_enabled(node)) {
+		pr_err("nfc disabled in device tree\n");
+		goto err;
+	}
 
-	ret = clk_get_bulk(dev, &clk_bulk);
-	if (!ret)
-		clk_enable_bulk(&clk_bulk);
+	regs = ofnode_get_addr(node);
+	if (regs == FDT_ADDR_T_NONE) {
+		pr_err("unable to find nfc address in device tree\n");
+		goto err;
+	}
+
+	nfc->regs = (void *)regs;
 
 	ret = sunxi_nfc_rst(nfc);
 	if (ret)
