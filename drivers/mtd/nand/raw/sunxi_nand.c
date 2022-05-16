@@ -1603,7 +1603,8 @@ static int sunxi_nand_ecc_init(struct mtd_info *mtd, struct nand_ecc_ctrl *ecc)
 	return 0;
 }
 
-static int sunxi_nand_chip_init(ofnode np, struct sunxi_nfc *nfc, int devnum)
+static int sunxi_nand_chip_init(struct udevice *dev, struct sunxi_nfc *nfc,
+				ofnode np, int devnum)
 {
 	const struct nand_sdr_timings *timings;
 	struct sunxi_nand_chip *chip;
@@ -1637,7 +1638,7 @@ static int sunxi_nand_chip_init(ofnode np, struct sunxi_nfc *nfc, int devnum)
 	for (i = 0; i < nsels; i++) {
 		ret = ofnode_read_u32_index(np, "reg", i, &tmp);
 		if (ret) {
-			dev_err(nfc->dev, "could not retrieve reg property: %d\n",
+			dev_err(dev, "could not retrieve reg property: %d\n",
 				ret);
 			return ret;
 		}
@@ -1660,7 +1661,7 @@ static int sunxi_nand_chip_init(ofnode np, struct sunxi_nfc *nfc, int devnum)
 			chip->sels[i].rb.type = RB_NATIVE;
 			chip->sels[i].rb.info.nativeid = tmp;
 		} else {
-			ret = gpio_request_by_name_nodev(np,
+			ret = gpio_request_by_name(dev,
 						"rb-gpios", i,
 						&chip->sels[i].rb.info.gpio,
 						GPIOD_IS_IN);
@@ -1744,13 +1745,13 @@ static int sunxi_nand_chip_init(ofnode np, struct sunxi_nfc *nfc, int devnum)
 	return 0;
 }
 
-static int sunxi_nand_chips_init(ofnode node, struct sunxi_nfc *nfc)
+static int sunxi_nand_chips_init(struct udevice *dev, struct sunxi_nfc *nfc)
 {
 	ofnode nand_np;
 	int ret, i = 0;
 
-	ofnode_for_each_subnode(nand_np, node) {
-		ret = sunxi_nand_chip_init(nand_np, nfc, i++);
+	dev_for_each_subnode(nand_np, dev) {
+		ret = sunxi_nand_chip_init(dev, nfc, nand_np, i++);
 		if (ret)
 			return ret;
 	}
