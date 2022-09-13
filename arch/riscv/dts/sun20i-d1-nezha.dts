@@ -6,7 +6,6 @@
 #include <dt-bindings/gpio/gpio.h>
 #include <dt-bindings/input/input.h>
 #include <dt-bindings/leds/common.h>
-#include <dt-bindings/pwm/pwm.h>
 
 #include "sun20i-d1.dtsi"
 #include "sun20i-d1-common-regulators.dtsi"
@@ -17,9 +16,8 @@
 
 	aliases {
 		ethernet0 = &emac;
+		ethernet1 = &xr829;
 		mmc0 = &mmc0;
-		mmc1 = &mmc1;
-		mmc2 = &mmc2;
 		serial0 = &uart0;
 		spi0 = &spi0;
 	};
@@ -33,8 +31,8 @@
 		type = "a";
 
 		port {
-			hdmi_con_in: endpoint {
-				remote-endpoint = <&hdmi_out_con>;
+			hdmi_connector_in: endpoint {
+				remote-endpoint = <&hdmi_out_connector>;
 			};
 		};
 	};
@@ -44,7 +42,7 @@
 		regulator-name = "usbvbus";
 		regulator-min-microvolt = <5000000>;
 		regulator-max-microvolt = <5000000>;
-		gpio = <&gpio 3 19 GPIO_ACTIVE_HIGH>; /* PD19 */
+		gpio = <&pio 3 19 GPIO_ACTIVE_HIGH>; /* PD19 */
 		enable-active-high;
 		vin-supply = <&reg_vcc>;
 	};
@@ -60,19 +58,19 @@
 
 	wifi_pwrseq: wifi-pwrseq {
 		compatible = "mmc-pwrseq-simple";
-		reset-gpios = <&gpio 6 12 GPIO_ACTIVE_LOW>; /* PG12 */
+		reset-gpios = <&pio 6 12 GPIO_ACTIVE_LOW>; /* PG12 */
 	};
 };
 
 &codec {
-	allwinner,routing = "Headphone Jack", "HPOUTL",
-			    "Headphone Jack", "HPOUTR",
-			    "LINEINL", "HPOUTL",
-			    "LINEINR", "HPOUTR",
-			    "MICIN3", "Headset Microphone",
-			    "Headset Microphone", "HBIAS";
-	allwinner,widgets = "Microphone", "Headset Microphone",
-			    "Headphone", "Headphone Jack";
+	routing = "Headphone Jack", "HPOUTL",
+		  "Headphone Jack", "HPOUTR",
+		  "LINEINL", "HPOUTL",
+		  "LINEINR", "HPOUTR",
+		  "MICIN3", "Headset Microphone",
+		  "Headset Microphone", "HBIAS";
+	widgets = "Microphone", "Headset Microphone",
+		  "Headphone", "Headphone Jack";
 	status = "okay";
 };
 
@@ -101,65 +99,17 @@
 	status = "okay";
 };
 
-&gpio {
-	i2s2_pb_pins: i2s2-pb-pins {
-		pins = "PB5", "PB6", "PB7";
-		function = "i2s2";
-	};
-
-	i2s2_pb3_din_pin: i2s2-pb3-din-pin {
-		pins = "PB3";
-		function = "i2s2_din";
-	};
-
-	i2s2_pb4_dout_pin: i2s2-pb4-dout-pin {
-		pins = "PB4";
-		function = "i2s2_dout";
-	};
-
-	ledc_pc0_pin: ledc-pc0-pin {
-		pins = "PC0";
-		function = "ledc";
-	};
-
-	pwm0_pd16_pin: pwm0-pd16-pin {
-		pins = "PD16";
-		function = "pwm";
-	};
-
-	pwm2_pd18_pin: pwm2-pd18-pin {
-		pins = "PD18";
-		function = "pwm";
-	};
-
-	pwm7_pd22_pin: pwm7-pd22-pin {
-		pins = "PD22";
-		function = "pwm";
-	};
-
-	spdif_pd22_pin: spdif-pd22-pin {
-		pins = "PD22";
-		function = "spdif";
-	};
-};
-
 &hdmi {
 	status = "okay";
+};
 
-	port {
-		hdmi_out_con: endpoint {
-			remote-endpoint = <&hdmi_con_in>;
-		};
+&hdmi_out {
+	hdmi_out_connector: endpoint {
+		remote-endpoint = <&hdmi_connector_in>;
 	};
 };
 
 &hdmi_phy {
-	status = "okay";
-};
-
-&i2c0 {
-	pinctrl-0 = <&i2c0_pb10_pins>;
-	pinctrl-names = "default";
 	status = "okay";
 };
 
@@ -170,20 +120,14 @@
 
 	pcf8574a: gpio@38 {
 		compatible = "nxp,pcf8574a";
-		#address-cells = <0>;
 		reg = <0x38>;
+		interrupt-parent = <&pio>;
+		interrupts = <1 2 IRQ_TYPE_LEVEL_LOW>; /* PB2 */
+		interrupt-controller;
 		gpio-controller;
 		#gpio-cells = <2>;
-		interrupts-extended = <&gpio 1 2 IRQ_TYPE_LEVEL_LOW>; /* PB2 */
-		interrupt-controller;
 		#interrupt-cells = <2>;
 	};
-};
-
-&i2s2 {
-	pinctrl-0 = <&i2s2_pb_pins>, <&i2s2_pb3_din_pin>, <&i2s2_pb4_dout_pin>;
-	pinctrl-names = "default";
-	status = "okay";
 };
 
 &ledc {
@@ -191,7 +135,7 @@
 	pinctrl-names = "default";
 	status = "okay";
 
-	led@0 {
+	multi-led@0 {
 		reg = <0x0>;
 		color = <LED_COLOR_ID_RGB>;
 		function = LED_FUNCTION_INDICATOR;
@@ -219,7 +163,7 @@
 
 &mmc0 {
 	bus-width = <4>;
-	cd-gpios = <&gpio 5 6 GPIO_ACTIVE_HIGH>; /* PF6 */
+	cd-gpios = <&pio 5 6 GPIO_ACTIVE_HIGH>; /* PF6 */
 	disable-wp;
 	vmmc-supply = <&reg_vcc_3v3>;
 	vqmmc-supply = <&reg_vcc_3v3>;
@@ -240,7 +184,7 @@
 
 	xr829: wifi@1 {
 		reg = <1>;
-		host-wake-gpios = <&gpio 6 10 GPIO_ACTIVE_LOW>; /* PG10 */
+		host-wake-gpios = <&pio 6 10 GPIO_ACTIVE_LOW>; /* PG10 */
 	};
 };
 
@@ -253,13 +197,7 @@
 };
 
 &pwm {
-	pinctrl-0 = <&pwm0_pd16_pin>, <&pwm2_pd18_pin>;
-	pinctrl-names = "default";
-	status = "okay";
-};
-
-&spdif {
-	pinctrl-0 = <&spdif_pd22_pin>;
+	pinctrl-0 = <&pwm0_pd16_pin>;
 	pinctrl-names = "default";
 	status = "okay";
 };
@@ -314,16 +252,17 @@
 };
 
 &uart1 {
+	uart-has-rtscts;
 	pinctrl-0 = <&uart1_pg6_pins>, <&uart1_pg8_rts_cts_pins>;
 	pinctrl-names = "default";
 	status = "okay";
 
 	bluetooth {
 		compatible = "xradio,xr829-bt";
-		device-wakeup-gpios = <&gpio 6 16 GPIO_ACTIVE_LOW>; /* PG16 */
-		interrupts-extended = <&gpio 6 17 IRQ_TYPE_LEVEL_LOW>; /* PG17 */
+		device-wakeup-gpios = <&pio 6 16 GPIO_ACTIVE_LOW>; /* PG16 */
+		interrupts-extended = <&pio 6 17 IRQ_TYPE_LEVEL_LOW>; /* PG17 */
 		interrupt-names = "wakeup";
-		reset-gpios = <&gpio 6 18 GPIO_ACTIVE_LOW>; /* PG18 */
+		reset-gpios = <&pio 6 18 GPIO_ACTIVE_LOW>; /* PG18 */
 	};
 };
 
@@ -333,8 +272,8 @@
 };
 
 &usbphy {
-	usb0_id_det-gpios = <&gpio 3 21 GPIO_ACTIVE_LOW>; /* PD21 */
-	usb0_vbus_det-gpios = <&gpio 3 20 GPIO_ACTIVE_HIGH>; /* PD20 */
+	usb0_id_det-gpios = <&pio 3 21 GPIO_ACTIVE_HIGH>; /* PD21 */
+	usb0_vbus_det-gpios = <&pio 3 20 GPIO_ACTIVE_HIGH>; /* PD20 */
 	usb0_vbus-supply = <&reg_usbvbus>;
 	usb1_vbus-supply = <&reg_vcc>;
 	status = "okay";

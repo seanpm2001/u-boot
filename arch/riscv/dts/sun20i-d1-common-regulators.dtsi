@@ -21,16 +21,6 @@
 &codec {
 	avcc-supply = <&reg_aldo>;
 	hpvcc-supply = <&reg_hpldo>;
-	vdd33-supply = <&reg_vcc_3v3>;
-};
-
-&gpio {
-	vcc-pb-supply = <&reg_vcc_3v3>;
-	vcc-pc-supply = <&reg_vcc_3v3>;
-	vcc-pd-supply = <&reg_vcc_3v3>;
-	vcc-pe-supply = <&reg_vcc_3v3>;
-	vcc-pf-supply = <&reg_vcc_3v3>;
-	vcc-pg-supply = <&reg_vcc_3v3>;
 };
 
 &hdmi {
@@ -39,6 +29,15 @@
 
 &lradc {
 	vref-supply = <&reg_aldo>;
+};
+
+&pio {
+	vcc-pb-supply = <&reg_vcc_3v3>;
+	vcc-pc-supply = <&reg_vcc_3v3>;
+	vcc-pd-supply = <&reg_vcc_3v3>;
+	vcc-pe-supply = <&reg_vcc_3v3>;
+	vcc-pf-supply = <&reg_vcc_3v3>;
+	vcc-pg-supply = <&reg_vcc_3v3>;
 };
 
 &reg_aldo {
