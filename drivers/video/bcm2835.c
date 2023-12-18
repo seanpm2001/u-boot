@@ -43,7 +43,7 @@ static int bcm2835_video_probe(struct udevice *dev)
 
 	uc_priv->xsize = w;
 	uc_priv->ysize = h;
-	uc_priv->bpix = VIDEO_BPP32;
+	uc_priv->bpix = dev_get_driver_data(dev);
 	plat->base = fb_base;
 	plat->size = fb_size;
 
@@ -54,6 +54,9 @@ static const struct udevice_id bcm2835_video_ids[] = {
 	{ .compatible = "brcm,bcm2835-hdmi" },
 	{ .compatible = "brcm,bcm2711-hdmi0" },
 	{ .compatible = "brcm,bcm2708-fb" },
+#if !IS_ENABLED(CONFIG_VIDEO_DT_SIMPLEFB)
+	{ .compatible = "simple-framebuffer" },
+#endif
 	{ }
 };
 
