@@ -4,6 +4,7 @@
 # Copyright (C) 2018, Bin Meng <bmeng.cn@gmail.com>
 
 obj-y += virtio-uclass.o virtio_ring.o
+obj-$(CONFIG_VIRTIO_GPU) += virtio_gpu.o
 obj-$(CONFIG_VIRTIO_MMIO) += virtio_mmio.o
 obj-$(CONFIG_VIRTIO_PCI) += virtio_pci_modern.o
 obj-$(CONFIG_VIRTIO_PCI_LEGACY) += virtio_pci_legacy.o
